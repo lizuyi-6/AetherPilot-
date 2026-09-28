@@ -1,0 +1,17 @@
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# node
+frontend/node_modules/
+frontend/dist/
+
+# runtime data (experiment workspaces, sqlite, telemetry)
+data/
+.tmp/
+
+# os
+.DS_Store
+Thumbs.db

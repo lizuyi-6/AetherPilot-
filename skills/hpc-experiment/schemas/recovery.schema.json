@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RecoveryPlan",
+  "type": "object",
+  "required": ["incident_id", "strategy", "config_patch"],
+  "properties": {
+    "incident_id": { "type": "string" },
+    "strategy": { "enum": ["oom_batch_reduction", "nan_rollback", "crash_resume"] },
+    "config_patch": { "type": "object" },
+    "resume_from_checkpoint": { "type": ["string", "null"] },
+    "explanation": { "type": "string" },
+    "requires_approval": { "type": "boolean" }
+  }
+}

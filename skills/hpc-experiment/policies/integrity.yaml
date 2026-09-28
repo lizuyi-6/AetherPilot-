@@ -1,0 +1,23 @@
+# Experiment integrity policy.
+semantics_preserving:
+  allow_keys:
+    - per_device_train_batch_size
+    - gradient_accumulation_steps
+    - gradient_checkpointing
+    - max_grad_norm
+    - learning_rate          # decrease only
+    - dataloader_num_workers
+  invariants:
+    - effective_batch_size (batch * grad_accum) must remain constant
+    - learning_rate may only decrease after instability
+    - max_seq_length automatic change limited to ±50%
+semantic:
+  forbid_keys:
+    - model / model_name_or_path
+    - dataset / dataset_path
+    - loss_function
+    - metric
+    - train_val_split
+    - labels
+    - objective
+  rule: any change to these keys, or effective-batch change, requires APPROVAL REQUIRED

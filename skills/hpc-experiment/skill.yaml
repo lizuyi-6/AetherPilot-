@@ -1,0 +1,86 @@
+name: hpc-experiment
+version: 0.1.0
+display_name: HPC Experiment Operator
+description: >
+  Autonomous operation of GPU training experiments on single-node HPC hosts
+  (e.g. NVIDIA DGX Spark): preflight, planning, supervised execution, failure
+  diagnosis, safe recovery, evaluation, and reproducibility auditing.
+
+# A capability is professional knowledge + decision logic + tool composition
+# + verification + safety policy. The backend module listed per capability is
+# the runtime implementation loaded by the SkillRuntime.
+capabilities:
+  - id: environment_preflight
+    summary: Probe GPU/CUDA/Docker/disk/env; fail fast before committing compute.
+    runtime: app.agent.orchestrator:_preflight
+  - id: resource_estimation
+    summary: Estimate VRAM/disk/runtime; flag LOW/MEDIUM/HIGH risk (estimate != guarantee).
+    runtime: app.agent.orchestrator:_planning
+  - id: experiment_planning
+    summary: Turn goal + contract + system state into a structured Plan.
+    runtime: app.agent.planner:build_plan
+  - id: training_launcher
+    summary: Spawn supervised training process (argv list, no shell), stream logs.
+    runtime: app.training.launcher
+  - id: runtime_monitoring
+    summary: Live training metrics + GPU/system telemetry + disk guard.
+    runtime: app.telemetry.collector
+  - id: failure_diagnosis
+    summary: Deterministic detection of OOM/NaN/crash/disk/GPU incidents with evidence.
+    runtime: app.incidents.detector
+  - id: safe_recovery
+    summary: Integrity-checked config patches + checkpoint rollback + verification.
+    runtime: app.recovery
+  - id: checkpoint_management
+    summary: Deterministic checkpoint discovery, latest/stable selection.
+    runtime: app.training.checkpoint
+  - id: evaluation
+    summary: Best-checkpoint selection + target metric evaluation vs contract.
+    runtime: app.evaluation.runner
+  - id: reproducibility_audit
+    summary: manifest/environment/hashes/timeline/REPORT.md packaging.
+    runtime: app.reproducibility.packager
+
+permissions:
+  gpu_read: allow
+  process_launch: allow          # only the experiment's own training process
+  workspace_write: allow         # confined to data/experiments/<id>/
+  docker: allow-read             # docker info only; no daemon mutation
+  system_configuration: ask
+  kill_external_processes: deny
+  delete_user_files: deny
+
+detectors:
+  - id: cuda_oom
+    signature: 'CUDA out of memory|OutOfMemoryError|CUDA error: out of memory'
+    severity: high
+  - id: nan_loss
+    signature: 'loss=(nan|inf)'
+    severity: high
+  - id: process_crash
+    signature: 'exit_code != 0 (unmatched signature)'
+    severity: medium
+  - id: disk_low
+    signature: 'disk_free_gb < 5'
+    severity: critical
+  - id: gpu_unavailable
+    signature: 'no GPU via pynvml or nvidia-smi'
+    severity: critical
+
+recovery_strategies:
+  - id: oom_batch_reduction
+    for: cuda_oom
+    patch: batch_size /= 4, grad_accum *= 4 (effective batch preserved), gradient_checkpointing=on
+    integrity: semantics_preserving
+  - id: nan_rollback
+    for: nan_loss
+    patch: lr *= 0.75, max_grad_norm = 1.0, rollback to last stable checkpoint
+    integrity: semantics_preserving
+  - id: crash_resume
+    for: process_crash
+    patch: none — resume latest checkpoint
+    integrity: semantics_preserving
+
+evals:
+  - evals/oom_case.json
+  - evals/nan_case.json

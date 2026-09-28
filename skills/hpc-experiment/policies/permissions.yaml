@@ -1,0 +1,16 @@
+# Permission policy for hpc-experiment.
+# Maps action classes to the contract's permission model.
+command_classes:
+  READ_ONLY:    [nvidia-smi, nvcc, df, free, docker-info, git-status]
+  SAFE_WRITE:   [workspace-config-write, checkpoint-write, report-write]
+  PRIVILEGED:   [systemctl, apt, docker-daemon-config]   # require contract 'allow'; default ask
+  FORBIDDEN:    [rm-root, mkfs, dd-device, shutdown, kill-external]
+
+contract_mapping:
+  restart_training:        process_launch (own experiment process only)
+  modify_training_config:  SAFE_WRITE config patch after IntegrityGuard PRESERVED
+  install_python_packages: PRIVILEGED, default deny in contract
+  install_system_packages: PRIVILEGED, ask
+  modify_docker_daemon:    PRIVILEGED, ask
+  kill_external_processes: FORBIDDEN (contract must be false)
+  delete_user_files:       FORBIDDEN (contract must be false)

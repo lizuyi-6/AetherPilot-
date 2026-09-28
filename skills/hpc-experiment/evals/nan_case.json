@@ -1,0 +1,22 @@
+{
+  "id": "eval-nan-001",
+  "name": "NaN loss rolls back to stable checkpoint with reduced LR and clipping",
+  "given": {
+    "config": {
+      "per_device_train_batch_size": 32,
+      "gradient_accumulation_steps": 1,
+      "learning_rate": 2e-5,
+      "max_grad_norm": 0.0,
+      "max_steps": 80
+    },
+    "inject": { "inject_nan_at_step": 45, "nan_if_lr_above": 1.8e-5 }
+  },
+  "expect": {
+    "incident": "NAN_LOSS",
+    "strategy": "nan_rollback",
+    "patch": { "learning_rate": 1.5e-05, "max_grad_norm": 1.0 },
+    "rollback": "last_stable_checkpoint",
+    "integrity": "semantics_preserving",
+    "final_state": "COMPLETED"
+  }
+}

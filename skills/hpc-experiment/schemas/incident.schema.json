@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Incident",
+  "type": "object",
+  "required": ["id", "experiment_id", "type", "severity", "ts", "evidence", "confidence"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^inc-" },
+    "experiment_id": { "type": "string" },
+    "type": { "enum": ["CUDA_OOM", "NAN_LOSS", "PROCESS_CRASH", "DISK_LOW", "GPU_UNAVAILABLE"] },
+    "severity": { "enum": ["low", "medium", "high", "critical"] },
+    "ts": { "type": "number" },
+    "evidence": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "root_cause": { "type": "string" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "recommended_actions": { "type": "array", "items": { "type": "string" } },
+    "status": { "enum": ["OPEN", "RECOVERING", "RESOLVED", "FAILED"] }
+  }
+}

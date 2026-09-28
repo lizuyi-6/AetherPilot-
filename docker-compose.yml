@@ -1,0 +1,32 @@
+# Optional containerized run. Development never requires Docker.
+# On DGX Spark / Linux hosts with nvidia-container-toolkit, GPU telemetry
+# inside the container works via the nvidia runtime (deploy.resources below).
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports: ["8000:8000"]
+    volumes:
+      - aether-data:/app/data
+    environment:
+      AETHER_HOST: 0.0.0.0
+      AETHER_PORT: "8000"
+    # Uncomment on hosts with the NVIDIA container toolkit:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports: ["5173:80"]
+    depends_on: [backend]
+
+volumes:
+  aether-data:

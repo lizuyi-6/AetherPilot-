@@ -1,0 +1,26 @@
+{
+  "id": "eval-oom-001",
+  "name": "CUDA OOM at step 20 recovers with preserved effective batch",
+  "given": {
+    "config": {
+      "per_device_train_batch_size": 32,
+      "gradient_accumulation_steps": 1,
+      "learning_rate": 2e-5,
+      "gradient_checkpointing": false,
+      "max_steps": 80
+    },
+    "inject": { "inject_oom_at_step": 20, "oom_if_batch_size_above": 16 }
+  },
+  "expect": {
+    "incident": "CUDA_OOM",
+    "strategy": "oom_batch_reduction",
+    "patch": {
+      "per_device_train_batch_size": 8,
+      "gradient_accumulation_steps": 4,
+      "gradient_checkpointing": true
+    },
+    "effective_batch_preserved": true,
+    "integrity": "semantics_preserving",
+    "final_state": "COMPLETED"
+  }
+}
